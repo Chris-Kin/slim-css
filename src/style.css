@@ -26,9 +26,11 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-family: Averta, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: url(./assets//star.svg) no-repeat;
+  background-color: rgb(1,9,19);
 }
 
 h1 {
@@ -60,7 +62,7 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: calc(100% - 4em);
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -77,4 +79,8 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+:root {
+  --color-main: rgb(106, 167, 248);
 }

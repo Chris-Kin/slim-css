@@ -14,6 +14,8 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 
+import { writeCSSFile } from '../util/analyzer';
+
 self.MonacoEnvironment = {
     getWorker(_, label) {
       if (['css', 'scss', 'less'].includes(label)) {
@@ -75,13 +77,14 @@ onUnmounted(() => {
 function onAnalyze() {
   const css = editor.getValue();
   console.log(css);
+  writeCSSFile(css);
 }
 
 </script>
 
 <style lang="less" scoped>
 #monaco {
-  height: 800px;
+  height: 700px;
   text-align: left;
 }
 .btn {

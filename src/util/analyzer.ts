@@ -71,7 +71,7 @@ export async function runPostCss() {
 
 export async function writeCSSFile(content: string) {
     await webcontainerInstance.fs.writeFile('/index.css', content);
-    const packageJSON = await webcontainerInstance.fs.readFile('index.css', 'utf-8');
-    console.log('new css file is:', packageJSON);
+    // const packageJSON = await webcontainerInstance.fs.readFile('index.css', 'utf-8');
+    // console.log('new css file is:', packageJSON);
     runPostCss();
 };

@@ -6,7 +6,7 @@ import HelloWorld from './components/Main.vue'
   <div>
     <div class="bg"></div>
     <img src="./assets/logo.svg" class="logo vue" alt="Vue logo" />
-    <h1>Finding dulplical rules in stylesheet</h1>
+    <h1>Finding dulplical rules</h1>
     <h2>then mark it && fix it.</h2>
   </div>
   <HelloWorld msg="Vite + Vue" />

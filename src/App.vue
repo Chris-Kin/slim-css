@@ -43,4 +43,9 @@ h2 {
   background-image: url(/bg.webp);
   background-size: cover;
 }
+@media screen and (max-height: 1280px) {
+  .logo, h2 {
+    display: none;
+  }
+}
 </style>

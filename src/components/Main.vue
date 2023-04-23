@@ -9,8 +9,8 @@
         value="https://w2.kskwai.com/kos/nlav11103/static/2022/assets/index-5e06b938.css"
       />
       <button @click="onFetchCSS">
-        <img v-if="isFetchingCSSFile" src="/loading.svg" alt="">
-        <template v-else>GO</template>
+        <img v-show="isFetchingCSSFile" src="/loading.svg" alt="">
+        <span v-show="!isFetchingCSSFile">GO</span>
       </button>
     </div>
     <div id="monaco" ref="monaco"></div>
@@ -112,6 +112,10 @@ async function onFetchCSS(): Promise<void> {
 
 function onAnalyze(): void {
   const css = editor.getValue();
+  if (!css) {
+    Tooltip('Empty CSS');
+    return;
+  }
   writeCSSFile(css);
 }
 

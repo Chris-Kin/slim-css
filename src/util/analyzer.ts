@@ -1,23 +1,37 @@
 import { WebContainer } from '@webcontainer/api';
 
+// @ts-ignore
+import Tooltip from '../components/tooltip/index.js';
+
 /** @type {import('@webcontainer/api').WebContainer}  */
 let webcontainerInstance: WebContainer;
 
 export const files = {
     'index.css': {
       file: {
-        contents: `
-            .a {
-                color: red;
-            }`,
+        contents: '',
       },
     },
     'index.js': {
         file: {
           contents: `
               import postcss from 'postcss';
-              const a = postcss.parse('.a{color: red}');
-              console.log(a);
+              const ast = postcss.parse(process.env.css);
+              ast.nodes.forEach(it => {
+                if (it.type !== 'rule') {
+                  return;
+                }
+                it.nodes.forEach(decl => {
+                  if (decl.type !== 'decl') {
+                    return;
+                  }
+                  console.log({
+                    selectors: it.selectors,
+                    prop: decl.prop,
+                    value: decl.value
+                  });
+                });
+              });
               `,
         },
       },
@@ -25,13 +39,10 @@ export const files = {
       file: {
         contents: `
             {
-                "name": "example-app",
+                "name": "slim-css",
                 "type": "module",
                 "dependencies": {
-                    "express": "latest",
-                    "nodemon": "latest",
-                    "postcss": "latest",
-                    "postcss-cli": "latest"
+                    "postcss": "latest"
                 },
                 "scripts": {
                     "start": "node './' index.js"
@@ -42,36 +53,51 @@ export const files = {
 };
 
 window.addEventListener('load', async () => {
+  Tooltip('Booting WebContainer');
+
   // Call only once
   webcontainerInstance = await WebContainer.boot();
   await webcontainerInstance.mount(files);
 
-  const packageJSON = await webcontainerInstance.fs.readFile('package.json', 'utf-8');
-//   console.log('reading file finished:', packageJSON);
+  await webcontainerInstance.spawn('npm', ['install']);
 
+  setTimeout(() => {
+    Tooltip('WebContainer is Ready!');
+  }, 300);
 
-  const installProcess = await webcontainerInstance.spawn('npm', ['install']);
-  // Wait for install command to exit
-//   installProcess.output.pipeTo(new WritableStream({
-//     write(data) {
-//       console.log(data);
-//     }
-//   }));
+  webcontainerInstance.on('error', (e: any) => {
+    Tooltip('WebContainer Error:' + e.message);
+  });
 });
 
-export async function runPostCss() {
-    const postcssProcess = await webcontainerInstance.spawn('npm', ['run', 'start']);
-    // Wait for postcss command to exit
+export async function runPostCss(css: string) {
+    // const postcssProcess = await webcontainerInstance.spawn('npm', ['run', 'start']);
+    const postcssProcess = await webcontainerInstance.spawn('node', ['index.js'], {
+      env: {
+        css: css.replace(/\n/g, ''),
+        NO_COLOR: true,
+      }
+    });
+    
+    const rules: any = {};
+    const repeatRules: any = {};
     postcssProcess.output.pipeTo(new WritableStream({
-      write(data) {
-        console.log('【postcssProcess】', data);
+      write(dataStr) {
+        const obj = eval(`(${dataStr})`);
+        console.log('【postcssProcess】', obj);
+        const key = `${obj.selectors.join()}-${obj.prop}-${obj.value}`;
+        if ( key in rules ) {
+          repeatRules[key] = true;
+        } else {
+          rules[key] = true;
+        }
+        console.log(rules, repeatRules);
       }
     }));
 };
 
 export async function writeCSSFile(content: string) {
     await webcontainerInstance.fs.writeFile('/index.css', content);
-    // const packageJSON = await webcontainerInstance.fs.readFile('index.css', 'utf-8');
-    // console.log('new css file is:', packageJSON);
-    runPostCss();
+    const css = await webcontainerInstance.fs.readFile('index.css', 'utf-8');
+    runPostCss(css);
 };

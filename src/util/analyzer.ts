@@ -16,7 +16,9 @@ export const files = {
         file: {
           contents: `
               import postcss from 'postcss';
-              const ast = postcss.parse(process.env.css);
+              const { env: { css } } = process;
+              // const ast = postcss.parse(process.env.css);
+              const ast = postcss.parse(css);
               ast.nodes.forEach(it => {
                 if (it.type !== 'rule') {
                   return;
@@ -70,7 +72,7 @@ window.addEventListener('load', async () => {
   });
 });
 
-export async function runPostCss(css: string) {
+export async function runPostCSS(css: string) {
     // const postcssProcess = await webcontainerInstance.spawn('npm', ['run', 'start']);
     const postcssProcess = await webcontainerInstance.spawn('node', ['index.js'], {
       env: {
@@ -81,23 +83,33 @@ export async function runPostCss(css: string) {
     
     const rules: any = {};
     const repeatRules: any = {};
+    let allRulesCount = 0;
+    let repeatedRulesCount = 0;
     postcssProcess.output.pipeTo(new WritableStream({
       write(dataStr) {
         const obj = eval(`(${dataStr})`);
         console.log('【postcssProcess】', obj);
+        allRulesCount += 1;
         const key = `${obj.selectors.join()}-${obj.prop}-${obj.value}`;
         if ( key in rules ) {
           repeatRules[key] = true;
+          repeatedRulesCount++;
         } else {
           rules[key] = true;
         }
-        console.log(rules, repeatRules);
+        console.log(rules, repeatRules, allRulesCount, repeatedRulesCount);
+      },
+      close() {
+        console.log('😂👌👌 i should be the last');
+      },
+      abort(err) {
+        console.log("WritableStream abort error:", err);
       }
-    }));
+    }), { preventClose: false }).then(e => console.log('eee🫘🫘🫘🫘🫘', e));
 };
 
 export async function writeCSSFile(content: string) {
     await webcontainerInstance.fs.writeFile('/index.css', content);
     const css = await webcontainerInstance.fs.readFile('index.css', 'utf-8');
-    runPostCss(css);
+    runPostCSS(css);
 };

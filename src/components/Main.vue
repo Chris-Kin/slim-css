@@ -4,9 +4,9 @@
       <input
         type="url"
         ref="cssurl"
-        placeholder="https://w2.kskwai.com/kos/nlav11103/static/2022/assets/index-5e06b938.css"
+        placeholder="https://unpkg.com/element-plus/dist/index.css"
         required
-        value="https://w2.kskwai.com/kos/nlav11103/static/2022/assets/index-5e06b938.css"
+        value="https://unpkg.com/element-plus/dist/index.css"
       />
       <button @click="onFetchCSS">
         <img v-show="isFetchingCSSFile" src="/loading.svg" alt="">
@@ -14,7 +14,10 @@
       </button>
     </div>
     <div id="monaco" ref="monaco"></div>
-    <div class="btn" @click="onAnalyze">analyze</div>
+    <div class="btn" @click="onAnalyze">
+      <img v-show="isAnalyzing" src="/loading.svg" alt="">
+      <span v-show="!isAnalyzing">analyze</span>
+    </div>
   </div>
 </template>
 
@@ -55,8 +58,21 @@ defineProps<{ msg: string }>()
 const cssurl = ref();
 const monaco = ref();
 const isFetchingCSSFile = ref(false);
+const isAnalyzing = ref(false);
 
-const value = '';
+const value = `.foo {
+  color: red;
+  width: 200px;
+}
+.bar {
+  padding: 20px;
+  font-size: 18px;
+  padding: 20px;
+}
+.foo, .bar {
+  font-size: 18px;
+}
+`;
 
 let editor: Monaco.editor.IStandaloneCodeEditor;
 
@@ -116,7 +132,20 @@ function onAnalyze(): void {
     Tooltip('Empty CSS');
     return;
   }
-  writeCSSFile(css);
+
+  if (isAnalyzing.value) {
+    return;
+  }
+  isAnalyzing.value = true;
+
+  writeCSSFile(css, (data: any[]) => {
+    isAnalyzing.value = false;
+    console.warn('repeated rules is:', data[0]);
+    console.warn('total rules:', data[1]);
+    const rate = (data[2]/data[1]*100).toFixed(1);
+    console.warn('repetition rate:', rate);
+    Tooltip(`repetition rate is ${rate}%, you can open devtools to see more info.`);
+  });
 }
 
 </script>
@@ -142,6 +171,10 @@ function onAnalyze(): void {
   user-select: none;
   &:hover {
     opacity: 1;
+  }
+  img {
+    height: 20px;
+    animation: rolling 1s cubic-bezier(0.26, 0.54, 0.69, 0.42) infinite;
   }
 }
 .inputer {

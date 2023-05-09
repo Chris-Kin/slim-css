@@ -1,3 +1,4 @@
+import { debounce } from 'lodash-es';
 import { WebContainer } from '@webcontainer/api';
 
 // @ts-ignore
@@ -72,7 +73,13 @@ window.addEventListener('load', async () => {
   });
 });
 
-export async function runPostCSS(css: string) {
+export async function runPostCSS(css: string, cb: Function) {
+    const streamEndCB = debounce((...arr) => {
+      cb(arr);
+    }, 2400, {
+      leading: false,
+    });
+
     // const postcssProcess = await webcontainerInstance.spawn('npm', ['run', 'start']);
     const postcssProcess = await webcontainerInstance.spawn('node', ['index.js'], {
       env: {
@@ -80,36 +87,44 @@ export async function runPostCSS(css: string) {
         NO_COLOR: true,
       }
     });
-    
+
     const rules: any = {};
     const repeatRules: any = {};
     let allRulesCount = 0;
     let repeatedRulesCount = 0;
     postcssProcess.output.pipeTo(new WritableStream({
       write(dataStr) {
-        const obj = eval(`(${dataStr})`);
-        console.log('【postcssProcess】', obj);
-        allRulesCount += 1;
-        const key = `${obj.selectors.join()}-${obj.prop}-${obj.value}`;
-        if ( key in rules ) {
-          repeatRules[key] = true;
-          repeatedRulesCount++;
-        } else {
-          rules[key] = true;
+        try {
+          const obj = eval(`(${dataStr})`);
+          // console.log('【postcssProcess】', obj);
+
+          obj.selectors.forEach((selector: string) => {
+            allRulesCount += 1;
+            const key = `${selector}-${obj.prop}-${obj.value}`;
+            if ( key in rules ) {
+              repeatRules[key] = true;
+              repeatedRulesCount++;
+            } else {
+              rules[key] = true;
+            }
+            // simulating ending event which pass all data
+            streamEndCB(repeatRules, allRulesCount, repeatedRulesCount);
+          });
+        } catch {
+          console.error('something error');
         }
-        console.log(rules, repeatRules, allRulesCount, repeatedRulesCount);
       },
       close() {
-        console.log('😂👌👌 i should be the last');
+        console.log('【WritableStream close】...');
       },
       abort(err) {
-        console.log("WritableStream abort error:", err);
+        console.log("【WritableStream abort】", err);
       }
-    }), { preventClose: false }).then(e => console.log('eee🫘🫘🫘🫘🫘', e));
+    }), { preventClose: false }).catch((e) => console.log('【WritableStream error】', e));
 };
 
-export async function writeCSSFile(content: string) {
+export async function writeCSSFile(content: string, cb: Function) {
     await webcontainerInstance.fs.writeFile('/index.css', content);
     const css = await webcontainerInstance.fs.readFile('index.css', 'utf-8');
-    runPostCSS(css);
+    runPostCSS(css, cb);
 };

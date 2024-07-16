@@ -14,6 +14,7 @@ export default {
     name: "Tooltip",
     props: {
         position: String,
+        duration: Number,
     },
     data() {
         return {
@@ -35,7 +36,7 @@ export default {
         setTimeout(() => {
             this.show = false;
             this.onClose();
-        }, 3020);
+        }, Math.max(3020, this.$props.duration || 3000));
     },
 };
 </script>
@@ -60,6 +61,7 @@ export default {
     position: absolute;
     right: 20px;
     top: 20px;
+    color: rgba(255, 255, 255, 0.87);
     // width: 50%;
     min-width: 300px;
     border: 1px solid #f7cb04;

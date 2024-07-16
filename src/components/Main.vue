@@ -10,7 +10,7 @@
       />
       <button @click="onFetchCSS">
         <img v-show="isFetchingCSSFile" src="/loading.svg" alt="">
-        <span v-show="!isFetchingCSSFile">GO</span>
+        <span v-show="!isFetchingCSSFile">Load</span>
       </button>
     </div>
     <div id="monaco" ref="monaco"></div>
@@ -144,7 +144,7 @@ function onAnalyze(): void {
     console.warn('total rules:', data[1]);
     const rate = (data[2]/data[1]*100).toFixed(1);
     console.warn('repetition rate:', rate);
-    Tooltip(`repetition rate is ${rate}%, you can open devtools to see more info.`);
+    Tooltip(`repetition rate is ${rate}%, you can open devtools to see more info.`, { duration: 8000 });
   });
 }
 
@@ -152,8 +152,11 @@ function onAnalyze(): void {
 
 <style lang="less" scoped>
 #monaco {
-  height: 700px;
+  height: calc(100vh - 300px);
+  min-height: 300px;
   text-align: left;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
 }
 .btn {
   color: var(--color-main);
@@ -184,18 +187,21 @@ function onAnalyze(): void {
   margin-bottom: 16px;
   input {
     border: none;
-    height: 39px;
+    height: 40px;
     box-sizing: border-box;
     border-radius: 8px 0 0 8px;
     padding: 0 8px;
     border-right-width: 0;
     outline: none;
     width: 400px;
+    border: 2px solid #2a2a2a;
   }
   button {
     border-radius: 0 8px 8px 0;
     outline: none;
     width: 66px;
+    height: 40px;
+    box-sizing: border-box;
     img {
       height: 15px;
       animation: rolling 1s cubic-bezier(0.26, 0.54, 0.69, 0.42) infinite;
